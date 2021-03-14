@@ -14,9 +14,10 @@ from flask import Flask, Response, request, render_template, redirect, url_for
 from flaskext.mysql import MySQL
 import flask_login
 
-
 # for image uploading
 import os, base64
+
+from sqlalchemy import null
 
 mysql = MySQL()
 app = Flask(__name__)
@@ -152,15 +153,65 @@ def register_user():
         print("couldn't find all tokens")
         return flask.redirect(flask.url_for('register'))
 
-@app.route("/hello", methods=['POST','GET'])
-def search_users():
 
+@app.route("/search_complete", methods=['POST'])
+def follow_user():
+    try:
+        friendId = request.form.get('user_id')
+        print(friendId)
+        myId = getUserId()
+        print(myId)
+    except:
+        print(
+            "couldn't find all tokens")  # this prints to shell, end users will not see this (all print statements go to shell)
+        return render_template('search_complete.html', supress='True')
+    cursor = conn.cursor()
+    print(cursor.execute("INSERT INTO Friends (u_id, f_id) VALUES ('{0}', '{1}')".format(myId, friendId)))
+    conn.commit()
+    return render_template('search_complete.html', supress='True')
+
+
+@app.route("/friendList", methods=['POST'])
+def unfollow_user():
+    try:
+        friendId = request.form.get('f_id')
+        print(friendId)
+        myId = getUserId()
+        print(myId)
+    except:
+        print(
+            "couldn't find all tokens")  # this prints to shell, end users will not see this (all print statements go to shell)
+        return render_template('friendList.html', supress='True')
+    cursor = conn.cursor()
+    print(cursor.execute("Delete from Friends Where u_id = '{0}' and f_id ='{1}' ".format(myId, friendId)))
+    conn.commit()
+    return render_template('friendList.html', supress='True')
+
+
+@app.route("/hello", methods=['POST', 'GET'])
+def search_users():
     search = request.form.get('search')
     cursor = conn.cursor()
-    if cursor.execute("SELECT email FROM Users where email LIKE '%{0}%'".format(search)):
+    if cursor.execute("SELECT user_id,email FROM Users where email LIKE '%{0}%'".format(search)):
         data_list = cursor.fetchall()
         print(data_list[0])
-    return render_template('search_complete.html',datas = data_list)
+        return render_template('search_complete.html', datas=data_list)
+    else:
+        return '''<H1>"No Search Result"</H1>'''
+
+
+@app.route("/friendList", methods=['GET'])
+def list_friends():
+    myId = getUserId()
+    cursor = conn.cursor()
+    if cursor.execute(
+            "Select f_id,email from (SELECT friends.u_id,friends.f_id,users.email FROM friends INNER JOIN users ON friends.f_id = users.user_id) as friendList where u_id = '{0}' ;".format(
+                    myId)):
+        data_list = cursor.fetchall()
+        return render_template('friendList.html', datas=data_list)
+    else:
+        return '''<H1>"you have no friends Yet"</H1>'''
+
 
 def getUsersPhotos(uid):
     cursor = conn.cursor()
@@ -227,6 +278,10 @@ def upload_file():
 @app.route("/", methods=['GET'])
 def hello():
     return render_template('hello.html', message='Welecome to Photoshare')
+
+
+def getUserId():
+    return getUserIdFromEmail(flask_login.current_user.id)
 
 
 if __name__ == "__main__":

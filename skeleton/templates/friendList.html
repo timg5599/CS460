@@ -1,0 +1,14 @@
+{% if datas %}
+<h2>Find your Friends</h2>
+    <ul>
+    {% for data in datas %}
+         <form method="post" action="{{ url_for('unfollow_user')}}">
+             <input type="hidden" name="f_id" value="{{data[0]}}"/>
+             <li>{{data[0]}} {{data[1]}}<br></li>
+             <button type="submit">unfollow</button>
+        </form>
+    {% endfor %}
+    </ul>
+{% endif %}
+
+<li><a href='/'>Home</a></li>
