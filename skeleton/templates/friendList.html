@@ -1,5 +1,6 @@
 {% if datas %}
 <h2>Find your Friends</h2>
+<h3>You will not see them if you are already friends</h3>
     <ul>
     {% for data in datas %}
          <form method="post" action="{{ url_for('unfollow_user')}}">

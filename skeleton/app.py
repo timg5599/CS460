@@ -191,8 +191,9 @@ def unfollow_user():
 @app.route("/hello", methods=['POST', 'GET'])
 def search_users():
     search = request.form.get('search')
+    myID= getUserId()
     cursor = conn.cursor()
-    if cursor.execute("SELECT user_id,email FROM Users where email LIKE '%{0}%'".format(search)):
+    if cursor.execute("SELECT user_id,email FROM users where email LIKE '%{0}%' and user_id <> '{1}' and user_id not in (Select f_id as user_id from (SELECT friends.u_id,friends.f_id,users.email FROM friends INNER JOIN users ON friends.f_id = users.user_id) as friendList where u_id = '{1}')" .format(search,myID)):
         data_list = cursor.fetchall()
         print(data_list[0])
         return render_template('search_complete.html', datas=data_list)
