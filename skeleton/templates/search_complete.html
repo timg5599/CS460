@@ -11,15 +11,13 @@
 <h2>Find your Friends</h2>
     <ul>
     {% for data in datas %}
-        <li>{{data[0]}}<br>
+         <form method="post" action="{{ url_for('follow_user') }}">
+             <input type="hidden" name="user_id" value="{{data[0]}}"/>
+        <li>{{data[0]}} {{data[1]}}<br></li>
+             <button type="submit">Follow</button>
+        </form>
     {% endfor %}
     </ul>
-{% endif %}
-
-{% if message is none %}
-  <p>You should <a href='/login'>login!</a></p>
-{% else %}
-  <p> Go to <a href='/profile'>profile?</a></p>
 {% endif %}
 
 <ul>
