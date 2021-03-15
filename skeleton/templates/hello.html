@@ -40,9 +40,15 @@
             <button type="submit">comment</button>
         </form>
         <form method="post" action="{{ url_for('like_photo') }}">
-            {{photo[3]}}<input type="hidden" name="photo_id" value="{{photo[1]}}"/>
-             <button type="submit">Like</button>
+            {{photo[3]}}
+            <input type="hidden" name="photo_id" value="{{photo[1]}}"/>
+            <button type="submit">Like</button>
         </form>
+    {%if photo[4]%}
+    {%for list in photo[4]%}
+    <h5>{{list[1]}} : {{list[0]}}</h5>
+    {%endfor%}
+    {%endif%}
 </div>
     {% endfor %}
     </ul>

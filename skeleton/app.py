@@ -224,8 +224,6 @@ def list_friends():
 
 
 
-
-
 def getUserIdFromEmail(email):
     cursor = conn.cursor()
     cursor.execute("SELECT user_id  FROM Users WHERE email = '{0}'".format(email))
@@ -287,22 +285,39 @@ def upload_file():
 
 def getUsersPhotos(uid):
     cursor = conn.cursor()
-    cursor.execute("SELECT imgdata, picture_id, caption,numLike FROM Pictures WHERE user_id = '{0}'".format(uid))
-    return cursor.fetchall()  # NOTE list of tuples, [(imgdata, pid), ...]
+    cursor.execute("SELECT imgdata, picture_id, caption, numLike FROM Pictures WHERE user_id = '{0}'".format(uid))
+    picture_list = cursor.fetchall()
+    new_tuple_with_comment = []
+    for i in range(len(picture_list)):
+        pid = picture_list[i][1]
+        if(cursor.execute("select text,email from(SELECT comment.p_id,comment.u_id,comment.text,users.email FROM comment INNER JOIN users ON comment.u_id = users.user_id) as newcomment where p_id ={0}".format(pid))):
+            comment = cursor.fetchall()
+            temp = (picture_list[i][0],picture_list[i][1],picture_list[i][2],picture_list[i][3],comment)
+            new_tuple_with_comment.append(temp)
+        else:
+            temp = (picture_list[i][0],picture_list[i][1], picture_list[i][2], picture_list[i][3])
+            new_tuple_with_comment.append(temp)
+    return new_tuple_with_comment # NOTE list of tuples, [(imgdata, pid), ...]
+
 
 @app.route('/profile', methods=['POST'])
 def like_photo():
+    print("liked photo")
     pid= request.form.get('photo_id')
     cursor = conn.cursor()
     cursor.execute("UPDATE pictures SET numLike = numLike + 1 WHERE picture_id ='{0}'".format(pid))
+    conn.commit()
     return render_template('hello.html', name=flask_login.current_user.id,
                                photos=getUsersPhotos(getUserId()), base64=base64)
 
-@app.route('/profile', methods=['POST'])
+@app.route('/profile/comment', methods=['POST'])
 def comment_photo():
     pid= request.form.get('photo_id')
+    text = request.form.get('comment')
+    print(pid,text)
     cursor = conn.cursor()
-    cursor.execute("UPDATE pictures SET numLike = numLike + 1 WHERE picture_id ='{0}'".format(pid))
+    cursor.execute("INSERT INTO comment (u_id,p_id,text) VALUES ('{0}','{1}','{2}')".format(getUserId(),pid,text))
+    conn.commit()
     return render_template('hello.html', name=flask_login.current_user.id, message='Photo uploaded!',
                                photos=getUsersPhotos(getUserId()), base64=base64)
 # end photo uploading code
@@ -317,7 +332,9 @@ def hello():
 def getUserId():
     return getUserIdFromEmail(flask_login.current_user.id)
 
-
+def getEmailwithID(uid):
+    if cursor.execute("SELECT email  FROM Users WHERE  userid= '{0}'".format(uid)):
+        return cursor.fetchone()[0]
 
 if __name__ == "__main__":
     # this is invoked when in the shell  you run
