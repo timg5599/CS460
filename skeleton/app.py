@@ -287,11 +287,19 @@ def upload_file():
 
 def getUsersPhotos(uid):
     cursor = conn.cursor()
-    cursor.execute("SELECT imgdata, picture_id, caption FROM Pictures WHERE user_id = '{0}'".format(uid))
+    cursor.execute("SELECT imgdata, picture_id, caption,numLike FROM Pictures WHERE user_id = '{0}'".format(uid))
     return cursor.fetchall()  # NOTE list of tuples, [(imgdata, pid), ...]
 
 @app.route('/profile', methods=['POST'])
 def like_photo():
+    pid= request.form.get('photo_id')
+    cursor = conn.cursor()
+    cursor.execute("UPDATE pictures SET numLike = numLike + 1 WHERE picture_id ='{0}'".format(pid))
+    return render_template('hello.html', name=flask_login.current_user.id,
+                               photos=getUsersPhotos(getUserId()), base64=base64)
+
+@app.route('/profile', methods=['POST'])
+def comment_photo():
     pid= request.form.get('photo_id')
     cursor = conn.cursor()
     cursor.execute("UPDATE pictures SET numLike = numLike + 1 WHERE picture_id ='{0}'".format(pid))
@@ -308,6 +316,7 @@ def hello():
 
 def getUserId():
     return getUserIdFromEmail(flask_login.current_user.id)
+
 
 
 if __name__ == "__main__":
