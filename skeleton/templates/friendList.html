@@ -12,4 +12,17 @@
     </ul>
 {% endif %}
 
+{% if friend_recommandation %}
+<h2>Here are some recommandations</h2>
+<ul>
+    {% for data in friend_recommandation %}
+         <form method="post" action="{{ url_for('follow_user') }}">
+             <input type="hidden" name="user_id" value="{{data[0]}}"/>
+        <li>{{data[0]}} {{data[1]}}<br></li>
+             <button type="submit">Follow</button>
+        </form>
+    {% endfor %}
+</ul>
+{% endif %}
+
 <li><a href='/'>Home</a></li>

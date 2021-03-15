@@ -191,27 +191,33 @@ def unfollow_user():
 @app.route("/hello", methods=['POST', 'GET'])
 def search_users():
     search = request.form.get('search')
-    myID= getUserId()
-    cursor = conn.cursor()
+    try:
+        myID= getUserId()
+        cursor = conn.cursor()
+    except:
+        print("couldn't find all tokens")
+        return '''<H1>You need to login</H1>"'''
+
     if cursor.execute("SELECT user_id,email FROM users where email LIKE '%{0}%' and user_id <> '{1}' and user_id not in (Select f_id as user_id from (SELECT friends.u_id,friends.f_id,users.email FROM friends INNER JOIN users ON friends.f_id = users.user_id) as friendList where u_id = '{1}')" .format(search,myID)):
         data_list = cursor.fetchall()
         print(data_list[0])
         return render_template('search_complete.html', datas=data_list)
     else:
-        return '''<H1>"No Search Result"</H1>'''
+        return '''<H1>"No Search Result"</H1><a href='/'>Home</a>'''
 
 
 @app.route("/friendList", methods=['GET'])
 def list_friends():
     myId = getUserId()
     cursor = conn.cursor()
-    if cursor.execute(
-            "Select f_id,email from (SELECT friends.u_id,friends.f_id,users.email FROM friends INNER JOIN users ON friends.f_id = users.user_id) as friendList where u_id = '{0}' ;".format(
-                    myId)):
+    if cursor.execute("Select f_id,email from (SELECT friends.u_id,friends.f_id,users.email FROM friends INNER JOIN users ON friends.f_id = users.user_id) as friendList where u_id = '{0}' ;".format(myId)):
         data_list = cursor.fetchall()
-        return render_template('friendList.html', datas=data_list)
+        if cursor.execute("SELECT user_id,email FROM users where user_id <> '{0}' and user_id not in (Select f_id as user_id from (SELECT friends.u_id,friends.f_id,users.email FROM friends INNER JOIN users ON friends.f_id = users.user_id) as friendList where u_id ='{0}') order by rand() Limit 5".format(myId)):
+            recommand_list = cursor.fetchall()
+        return render_template('friendList.html', datas=data_list, friend_recommandation=recommand_list)
     else:
-        return '''<H1>"you have no friends Yet"</H1>'''
+        return '''<H1>"you have no friends Yet"</H1><a href='/'>Home</a>'''
+
 
 
 def getUsersPhotos(uid):
@@ -223,6 +229,12 @@ def getUsersPhotos(uid):
 def getUserIdFromEmail(email):
     cursor = conn.cursor()
     cursor.execute("SELECT user_id  FROM Users WHERE email = '{0}'".format(email))
+    return cursor.fetchone()[0]
+
+
+def getUserScoreByEmail(email):
+    cursor = conn.cursor()
+    cursor.execute("SELECT score  FROM Users WHERE email = '{0}'".format(email))
     return cursor.fetchone()[0]
 
 
@@ -241,7 +253,7 @@ def isEmailUnique(email):
 @app.route('/profile')
 @flask_login.login_required
 def protected():
-    return render_template('hello.html', name=flask_login.current_user.id, message="Here's your profile")
+    return render_template('hello.html', name=flask_login.current_user.id, message="Here's your profile", score =getUserIdFromEmail(flask_login.current_user.id))
 
 
 # begin photo uploading code

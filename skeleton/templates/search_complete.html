@@ -9,6 +9,7 @@
 
 {% if datas %}
 <h2>Find your Friends</h2>
+<h3>Will only show ones that your are not following yet</h3>
     <ul>
     {% for data in datas %}
          <form method="post" action="{{ url_for('follow_user') }}">
@@ -20,8 +21,6 @@
     </ul>
 {% endif %}
 
-<ul>
 <li><a href='/'>Home</a></li>
-</ul>
 
 
