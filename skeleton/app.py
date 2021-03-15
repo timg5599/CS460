@@ -135,6 +135,10 @@ def register_user():
     try:
         email = request.form.get('email')
         password = request.form.get('password')
+        firstname = request.form.get('firstname')
+        lastname = request.form.get('lastname')
+        hometown = request.form.get('hometown')
+        gender = request.form.get('gender')
     except:
         print(
             "couldn't find all tokens")  # this prints to shell, end users will not see this (all print statements go to shell)
@@ -142,7 +146,7 @@ def register_user():
     cursor = conn.cursor()
     test = isEmailUnique(email)
     if test:
-        print(cursor.execute("INSERT INTO Users (email, password) VALUES ('{0}', '{1}')".format(email, password)))
+        print(cursor.execute("INSERT INTO Users (email, password,first_name,last_name,hometown,gender) VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}')".format(email, password,firstname,lastname,hometown,gender)))
         conn.commit()
         # log user in
         user = User()
@@ -220,10 +224,6 @@ def list_friends():
 
 
 
-def getUsersPhotos(uid):
-    cursor = conn.cursor()
-    cursor.execute("SELECT imgdata, picture_id, caption FROM Pictures WHERE user_id = '{0}'".format(uid))
-    return cursor.fetchall()  # NOTE list of tuples, [(imgdata, pid), ...]
 
 
 def getUserIdFromEmail(email):
@@ -253,7 +253,9 @@ def isEmailUnique(email):
 @app.route('/profile')
 @flask_login.login_required
 def protected():
-    return render_template('hello.html', name=flask_login.current_user.id, message="Here's your profile", score =getUserIdFromEmail(flask_login.current_user.id))
+    uid=getUserId()
+    return render_template('hello.html', name=flask_login.current_user.id, message='Photo uploaded!',
+                               photos=getUsersPhotos(uid), base64=base64)
 
 
 # begin photo uploading code
@@ -283,7 +285,18 @@ def upload_file():
     else:
         return render_template('upload.html')
 
+def getUsersPhotos(uid):
+    cursor = conn.cursor()
+    cursor.execute("SELECT imgdata, picture_id, caption FROM Pictures WHERE user_id = '{0}'".format(uid))
+    return cursor.fetchall()  # NOTE list of tuples, [(imgdata, pid), ...]
 
+@app.route('/profile', methods=['POST'])
+def like_photo():
+    pid= request.form.get('photo_id')
+    cursor = conn.cursor()
+    cursor.execute("UPDATE pictures SET numLike = numLike + 1 WHERE picture_id ='{0}'".format(pid))
+    return render_template('hello.html', name=flask_login.current_user.id, message='Photo uploaded!',
+                               photos=getUsersPhotos(getUserId()), base64=base64)
 # end photo uploading code
 
 

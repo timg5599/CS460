@@ -7,9 +7,13 @@ CREATE TABLE Users (
     user_id int4  AUTO_INCREMENT,
     email varchar(255) UNIQUE,
     password varchar(255),
+    first_name varchar(255),
+    last_name varchar(255),
+    hometown varchar(255),
+    gender varchar(255),
+    score int4,
   CONSTRAINT users_pk PRIMARY KEY (user_id)
 );
-
 CREATE TABLE Pictures
 (
   picture_id int4  AUTO_INCREMENT,

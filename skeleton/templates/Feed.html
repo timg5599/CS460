@@ -1,0 +1,20 @@
+{% if photos %}
+<h2>Here are your photos</h2>
+    <ul>
+    {% for photo in photos %}
+<div style="max-width: 400px" >
+    <li>{{photo[2]}}<br>
+      <img src='data:image/jpg;base64, {{ base64.b64encode(photo[0]).decode("ascii") }}' width="400"/></li>
+        <form >
+            <input type="hidden" name="photo_id" value="{{photo[1]}}"/>
+            <label>Comment: <input type="text" name="comment"></label>
+            <button type="submit">comment</button>
+        </form>
+        <form>
+            <input type="hidden" name="photo_id"/>
+             <button type="submit">Like</button>
+        </form>
+</div>
+    {% endfor %}
+    </ul>
+{% endif %}
