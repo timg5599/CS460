@@ -278,7 +278,7 @@ def upload_file():
                        (photo_data, uid, caption))
         conn.commit()
         return render_template('hello.html', name=flask_login.current_user.id, message='Photo uploaded!',
-                               photos=getUsersPhotos(uid), base64=base64)
+                               photos=getUsersPhotos(uid), base64=base64 )
     # The method is GET so we return a  HTML form to upload the a photo.
     else:
         return render_template('upload.html')
@@ -297,7 +297,11 @@ def getUsersPhotos(uid):
         else:
             temp = (picture_list[i][0],picture_list[i][1], picture_list[i][2], picture_list[i][3])
             new_tuple_with_comment.append(temp)
+
+
+        #(img,pictureid, caption,numlikes,comments (text,email))
     return new_tuple_with_comment # NOTE list of tuples, [(imgdata, pid), ...]
+
 
 
 @app.route('/profile', methods=['POST'])
@@ -310,6 +314,7 @@ def like_photo():
     return render_template('hello.html', name=flask_login.current_user.id,
                                photos=getUsersPhotos(getUserId()), base64=base64)
 
+
 @app.route('/profile/comment', methods=['POST'])
 def comment_photo():
     pid= request.form.get('photo_id')
@@ -320,7 +325,7 @@ def comment_photo():
     conn.commit()
     return render_template('hello.html', name=flask_login.current_user.id, message='Photo uploaded!',
                                photos=getUsersPhotos(getUserId()), base64=base64)
-# end photo uploading code
+
 
 
 # default page
