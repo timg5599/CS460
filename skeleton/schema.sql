@@ -45,7 +45,7 @@ CREATE TABLE comment
   p_id int4,
   text VARCHAR(255),
   date DATETIME,
-  FOREIGN KEY (u_id) REFERENCES Users(user_id),
+  FOREIGN KEY (u_id) REFERENCES Users(user_id),  
   FOREIGN KEY (p_id) REFERENCES Pictures(picture_id)
 );
 

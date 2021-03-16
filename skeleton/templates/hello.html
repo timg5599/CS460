@@ -8,7 +8,6 @@
         <button type="submit" class="btn btn-default">Search your Friends with Email!</button>
 </form>
 
-
 {% if message %}
   <h4>{{message}}!</h4>
 {% endif %}
@@ -48,28 +47,36 @@
     {% for photo in photos %}
 <div style="max-width: 400px" >
     <li>{{photo[2]}}<br>
-      <img src='data:image/jpg;base64, {{ base64.b64encode(photo[0]).decode("ascii") }}' width="400"/></li>
+      <img src='data:image/jpg;base64, {{ base64.b64encode(photo[0]).decode("ascii") }}' width="300"height="300"/></li>
+
         <form method="post" action="{{ url_for('comment_photo') }}">
             <input type="hidden" name="photo_id" value="{{photo[1]}}"/>
             <label>Comment: <input type="text" name="comment"></label>
             <button type="submit">comment</button>
         </form>
+
         <form method="post" action="{{ url_for('like_photo') }}">
             {{photo[3]}}
             <input type="hidden" name="photo_id" value="{{photo[1]}}"/>
             <button type="submit">Like</button>
         </form>
+
     {%if photo[4]%}
+
     {%for list in photo[4]%}
     <h5>{{list[1]}} : {{list[0]}}</h5>
     {%endfor%}
+
     {%endif%}
 </div>
     {% endfor %}
     </ul>
 {% endif %}
 
+
+
 <ul>
+
     <li><a href='/createalbum'>Create Album</a> </li>
     <li><a href='/Feed'>Go check out photos</a> </li>
     <li><a href='/upload'>Upload a photo</a> </li>
@@ -77,5 +84,7 @@
     <li><a href='/friendList'>See who you are following! / Friend Recommandation</a></li>
     <li><a href='/'>Home</a></li>
 </ul>
+
+
 
 
