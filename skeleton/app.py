@@ -157,6 +157,26 @@ def register_user():
         print("couldn't find all tokens")
         return flask.redirect(flask.url_for('register'))
 
+@app.route("/createalbum", methods=['GET'])
+def make_album():
+    return render_template('createalbum.html')
+
+@app.route("/createalbum", methods=['POST'])
+def create_album():
+    try:
+        albumname = request.form.get('albumname')
+    except:
+        print("couldn't find all tokens")
+        return flask.redirect(flask.url_for('createalbum'))
+    cursor = conn.cursor()
+    isUnique = isAlbumUnique(albumname)
+    if isUnique:
+        print(cursor.execute("INSERT INTO Albums (album_name, user_id) VALUES ('{0}', '{1}')".format(albumname, getUserId())))
+        conn.commit()
+        return render_template('hello.html', name=flask_login.current_user.id, message='Album Created!')
+    else:
+        print("couldn't find all tokens")
+        return flask.redirect(flask.url_for('create_album'))
 
 @app.route("/search_complete", methods=['POST'])
 def follow_user():
@@ -245,6 +265,15 @@ def isEmailUnique(email):
     else:
         return True
 
+def isAlbumUnique(albumname):
+    # use this to check if a email has already been registered
+    cursor = conn.cursor()
+    if cursor.execute("SELECT album_name FROM Albums WHERE album_name = '{0}'".format(albumname)):
+        # this means there are greater than zero entries with that email
+        return False
+    else:
+        return True
+
 
 # end login code
 
@@ -253,7 +282,7 @@ def isEmailUnique(email):
 def protected():
     uid=getUserId()
     return render_template('hello.html', name=flask_login.current_user.id, message='Photo uploaded!',
-                               photos=getUsersPhotos(uid), base64=base64)
+                               albums = getUsersAlbums(uid), photos=getUsersPhotos(uid), base64=base64)
 
 
 # begin photo uploading code
@@ -282,6 +311,16 @@ def upload_file():
     # The method is GET so we return a  HTML form to upload the a photo.
     else:
         return render_template('upload.html')
+
+def getUsersAlbums(uid):
+    cursor = conn.cursor()
+    cursor.execute("SELECT album_name, album_date FROM Albums WHERE user_id = '{0}'".format(uid))
+    album_list = cursor.fetchall()
+    album_ids = []
+    for i in range(len(album_list)):
+        album_ids.append(album_list[i][0])
+        
+    return album_ids
 
 def getUsersPhotos(uid):
     cursor = conn.cursor()

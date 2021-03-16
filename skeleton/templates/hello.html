@@ -27,6 +27,21 @@
   <p> Go to <a href='/profile'>profile?</a></p>
 {% endif %}
 
+
+{% if albums %}
+<h2>Here are your albums</h2>
+    <ul>
+    {% for album in albums %}
+      <div style="max-width: 400px" >
+          <li>{{album}}<br>
+            
+              
+      </div>
+    {% endfor %}
+    </ul>
+{% endif %}
+
+
 {% if photos %}
 <h2>Here are your photos</h2>
     <ul>
@@ -55,6 +70,7 @@
 {% endif %}
 
 <ul>
+    <li><a href='/createalbum'>Create Album</a> </li>
     <li><a href='/Feed'>Go check out photos</a> </li>
     <li><a href='/upload'>Upload a photo</a> </li>
     <li><a href='/logout'>Logout</a></li>
