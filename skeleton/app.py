@@ -240,7 +240,7 @@ def search_photo():
         return '''<H1>You need to login</H1>"'''
 
     else:
-        return render_template('Feed2.html', photos=getSearchPhotos(getUserId(),search), base64=base64)
+        return render_template('Feed2.html', photos=getSearchPhotos(getUserId(),search),photo_comment =getSearchComment(search), base64=base64)
 
 
 @app.route("/friendList", methods=['GET'])
@@ -293,9 +293,9 @@ def isAlbumUnique(albumname):
 @app.route('/profile')
 @flask_login.login_required
 def protected():
-    uid=getUserId()
-    return render_template('hello.html', name=flask_login.current_user.id, message='Photo uploaded!',
-                               albums = getUsersAlbums(uid), photos=getUsersPhotos(uid), base64=base64)
+        uid=getUserId()
+        return render_template('hello.html', name=flask_login.current_user.id, message='Photo uploaded!',albums = getUsersAlbums(uid), photos=getUsersPhotos(uid), base64=base64)
+
 
 
 # begin photo uploading code
@@ -314,6 +314,7 @@ def upload_file():
         uid = getUserIdFromEmail(flask_login.current_user.id)
         imgfile = request.files['photo']
         caption = request.form.get('caption')
+        update_scorebyone()
         photo_data = imgfile.read()
         cursor = conn.cursor()
         cursor.execute('''INSERT INTO Pictures (imgdata, user_id, caption) VALUES (%s, %s, %s )''',
@@ -354,7 +355,7 @@ def getUsersPhotos(uid):
 
 def getFriendPhotos(uid):
     cursor = conn.cursor()
-    cursor.execute("SELECT imgdata, picture_id, caption, numLike FROM Pictures WHERE user_id in (Select f_id as user_id from friends where u_id =1);".format(uid))
+    cursor.execute("SELECT imgdata, picture_id, caption, numLike FROM Pictures WHERE user_id in (Select f_id as user_id from friends where u_id ={0});".format(uid))
     picture_list = cursor.fetchall()
     new_tuple_with_comment = []
     for i in range(len(picture_list)):
@@ -368,6 +369,8 @@ def getFriendPhotos(uid):
             new_tuple_with_comment.append(temp)
         #(img,pictureid, caption,numlikes,comments (text,email))
     return new_tuple_with_comment # NOTE list of tuples, [(imgdata, pid), ...]
+
+
 def getSearchPhotos(uid,searchstr):
     cursor = conn.cursor()
     str= searchstr
@@ -383,9 +386,31 @@ def getSearchPhotos(uid,searchstr):
         else:
             temp = (picture_list[i][0],picture_list[i][1], picture_list[i][2], picture_list[i][3])
             new_tuple_with_comment.append(temp)
+
+    return new_tuple_with_comment # NOTE list of tuples, [(imgdata, pid), ...]
+
+def getSearchComment(searchstr):
+    cursor = conn.cursor()
+    str= searchstr
+    cursor.execute("select imgdata, picture_id, caption, numLike from pictures where picture_id in(select p_id as p_id from comment where text like '%{0}%')".format(str))
+    picture_list = cursor.fetchall()
+    new_tuple_with_comment = []
+    for i in range(len(picture_list)):
+        pid = picture_list[i][1]
+        if(cursor.execute("select text,email from(SELECT comment.p_id,comment.u_id,comment.text,users.email FROM comment INNER JOIN users ON comment.u_id = users.user_id) as newcomment where p_id ={0}".format(pid))):
+            comment = cursor.fetchall()
+            temp = (picture_list[i][0],picture_list[i][1],picture_list[i][2],picture_list[i][3],comment)
+            new_tuple_with_comment.append(temp)
+        else:
+            temp = (picture_list[i][0],picture_list[i][1], picture_list[i][2], picture_list[i][3])
+            new_tuple_with_comment.append(temp)
         #(img,pictureid, caption,numlikes,comments (text,email))
     return new_tuple_with_comment # NOTE list of tuples, [(imgdata, pid), ...]
 
+def update_scorebyone():
+    cursor = conn.cursor()
+    cursor.execute("UPDATE users SET score = score + 1 WHERE user_id ='{0}'".format(getUserId()))
+    conn.commit()
 
 @app.route('/profile/like', methods=['POST'])
 def like_photo():
@@ -413,6 +438,7 @@ def comment_photo():
     text = request.form.get('comment')
     print(pid,text)
     cursor = conn.cursor()
+    update_scorebyone()
     cursor.execute("INSERT INTO comment (u_id,p_id,text) VALUES ('{0}','{1}','{2}')".format(getUserId(),pid,text))
     conn.commit()
     return render_template('hello.html', name=flask_login.current_user.id, message='Photo uploaded!',
@@ -422,6 +448,7 @@ def comment_photo():
 def comment_photo_friend():
     pid= request.form.get('photo_id')
     text = request.form.get('comment')
+    update_scorebyone()
     print(pid,text)
     cursor = conn.cursor()
     cursor.execute("INSERT INTO comment (u_id,p_id,text) VALUES ('{0}','{1}','{2}')".format(getUserId(),pid,text))
@@ -440,6 +467,14 @@ def hello():
 def feed():
        photos = getFriendPhotos(getUserId())
        return render_template('Feed2.html', photos=photos, base64=base64)
+
+@app.route("/LeaderBoard", methods=['GET'])
+def get_ranking():
+    cursor = conn.cursor()
+    cursor.execute("select email,score from users order by score desc LIMIT 3")
+    data = cursor.fetchall()
+    return render_template('LeaderBoard.html', datas= data)
+
 
 
 

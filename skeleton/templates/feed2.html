@@ -101,6 +101,33 @@
                         </div> <!-- /.post-masonry -->
                     {% endfor %}
                     {%endif%}
+                        {% if photo_comment %}
+                        {% for photo in photo_comment %}
+                        <div class="post-masonry col-md-4 col-sm-6">
+                            <div class="post-thumb">
+                              <img src='data:image/jpg;base64, {{ base64.b64encode(photo[0]).decode("ascii") }}' width="300"height="300"/>
+                                <div class="title-over">
+                                    <h4><a href="#">{{photo[2]}}</a></h4>
+                                </div>
+                            </div>
+                            <form method="post" action="{{ url_for('comment_photo_friend') }}">
+                                <input type="hidden" name="photo_id" value="{{photo[1]}}"/>
+                                <label>Comment: <input style="color:black" type="text" name="comment"></label>
+                                <button style="color:black" type="submit">comment</button>
+                           </form>
+                            <form method="post" action="{{ url_for('like_photo_friend') }}">
+                                            {{photo[3]}}
+                                            <input type="hidden" name="photo_id" value="{{photo[1]}}"/>
+                                            <button style="color:black" type="submit">Like</button>
+                            </form>
+                            {%if photo[4]%}
+                            {%for list in photo[4]%}
+                            <h5>{{list[1]}} : {{list[0]}}</h5>
+                            {%endfor%}
+                            {%endif%}
+                        </div> <!-- /.post-masonry -->
+                    {% endfor %}
+                    {%endif%}
                     </div>
                 </div>
             </div>
