@@ -326,14 +326,14 @@ def like_photo():
     conn.commit()
     return render_template('hello.html', name=flask_login.current_user.id,
                                photos=getUsersPhotos(getUserId()), base64=base64)
-@app.route('/Feed/like', methods=['POST'])
+@app.route('/Feed2/like', methods=['POST'])
 def like_photo_friend():
     print("liked photo")
     pid= request.form.get('photo_id')
     cursor = conn.cursor()
     cursor.execute("UPDATE pictures SET numLike = numLike + 1 WHERE picture_id ='{0}'".format(pid))
     conn.commit()
-    return render_template('feed.html', name=flask_login.current_user.id,
+    return render_template('feed2.html', name=flask_login.current_user.id,
                                photos=getFriendPhotos(getUserId()), base64=base64)
 
 
@@ -348,7 +348,7 @@ def comment_photo():
     return render_template('hello.html', name=flask_login.current_user.id, message='Photo uploaded!',
                                photos=getUsersPhotos(getUserId()), base64=base64)
 
-@app.route('/Feed/comment', methods=['POST'])
+@app.route('/Feed2/comment', methods=['POST'])
 def comment_photo_friend():
     pid= request.form.get('photo_id')
     text = request.form.get('comment')
@@ -356,7 +356,7 @@ def comment_photo_friend():
     cursor = conn.cursor()
     cursor.execute("INSERT INTO comment (u_id,p_id,text) VALUES ('{0}','{1}','{2}')".format(getUserId(),pid,text))
     conn.commit()
-    return render_template('Feed.html', name=flask_login.current_user.id, message='Photo uploaded!',
+    return render_template('Feed2.html', name=flask_login.current_user.id, message='Photo uploaded!',
                                photos=getFriendPhotos(getUserId()), base64=base64)
 
 
@@ -366,10 +366,10 @@ def comment_photo_friend():
 def hello():
     return render_template('hello.html', message='Welecome to Photoshare')
 
-@app.route("/Feed", methods=['GET'])
+@app.route("/Feed2", methods=['GET'])
 def feed():
        photos = getFriendPhotos(getUserId())
-       return render_template('Feed.html', photos=photos, base64=base64)
+       return render_template('Feed2.html', photos=photos, base64=base64)
 
 
 
