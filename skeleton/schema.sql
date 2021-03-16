@@ -31,11 +31,11 @@ CREATE TABLE Pictures
 CREATE TABLE Albums
 (
   album_id int4  AUTO_INCREMENT,
-  u_id int4,
+  user_id int4,
   album_name VARCHAR(255),
   album_date DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT album_pk PRIMARY KEY (album_id),
-  FOREIGN KEY (u_id) references Users(user_id)
+  FOREIGN KEY (user_id) references Users(user_id)
 );
 
 CREATE TABLE comment

@@ -31,11 +31,17 @@
 <h2>Here are your albums</h2>
     <ul>
     {% for album in albums %}
-      <div style="max-width: 400px" >
-          <li>{{album}}<br>
-            
+      <div method="get" style="max-width: 400px" >
+          <!-- <a action="{{ url_for('show_album_photos', variable= '{{album}}' ) }}">{{album}}</a> -->
+        
+        <form method="post" action="{{ url_for('show_album_photos') }}">
+          <input type="hidden" name="album_id" value="{{album[2]}}"/>
+          <button type="submit">{{album[0]}}</button>
+        </form>
               
       </div>
+
+
     {% endfor %}
     </ul>
 {% endif %}

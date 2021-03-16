@@ -315,10 +315,11 @@ def upload_file():
         imgfile = request.files['photo']
         caption = request.form.get('caption')
         update_scorebyone()
+        album = getAlbumId(request.form.get('album'))
         photo_data = imgfile.read()
         cursor = conn.cursor()
-        cursor.execute('''INSERT INTO Pictures (imgdata, user_id, caption) VALUES (%s, %s, %s )''',
-                       (photo_data, uid, caption))
+        cursor.execute('''INSERT INTO Pictures (imgdata, user_id, caption, album_id) VALUES (%s, %s, %s, %s )''',
+                       (photo_data, uid, caption, album))
         conn.commit()
         return render_template('hello.html', name=flask_login.current_user.id, message='Photo uploaded!',
                                photos=getUsersPhotos(uid), base64=base64 )
@@ -326,15 +327,21 @@ def upload_file():
     else:
         return render_template('upload.html')
 
+def getAlbumId(albumname):
+    cursor = conn.cursor()
+    cursor.execute("SELECT album_id FROM Albums WHERE album_name = '{0}'".format(albumname))
+    return cursor.fetchall()
+
 def getUsersAlbums(uid):
     cursor = conn.cursor()
-    cursor.execute("SELECT album_name, album_date FROM Albums WHERE user_id = '{0}'".format(uid))
+    cursor.execute("SELECT album_name, album_date, album_id FROM Albums WHERE user_id = '{0}'".format(uid))
     album_list = cursor.fetchall()
     album_ids = []
     for i in range(len(album_list)):
         album_ids.append(album_list[i][0])
+        # album_ids.append([album_list[i][0], album_list[i][2]])
         
-    return album_ids
+    return album_list
 
 def getUsersPhotos(uid):
     cursor = conn.cursor()
@@ -353,6 +360,24 @@ def getUsersPhotos(uid):
         #(img,pictureid, caption,numlikes,comments (text,email))
     return new_tuple_with_comment # NOTE list of tuples, [(imgdata, pid), ...]
 
+def getUserAlbumPhotos(uid, album):
+    cursor = conn.cursor()
+    cursor.execute("SELECT imgdata, picture_id, caption, numLike FROM Pictures WHERE user_id = '{0}' AND album_id = '{1}'".format(uid, album))
+    picture_list = cursor.fetchall()
+    new_tuple_with_comment = []
+    for i in range(len(picture_list)):
+        pid = picture_list[i][1]
+        if(cursor.execute("select text,email from(SELECT comment.p_id,comment.u_id,comment.text,users.email FROM comment INNER JOIN users ON comment.u_id = users.user_id) as newcomment where p_id ={0}".format(pid))):
+            comment = cursor.fetchall()
+            temp = (picture_list[i][0],picture_list[i][1],picture_list[i][2],picture_list[i][3],comment)
+            new_tuple_with_comment.append(temp)
+        else:
+            temp = (picture_list[i][0],picture_list[i][1], picture_list[i][2], picture_list[i][3])
+            new_tuple_with_comment.append(temp)
+        #(img,pictureid, caption,numlikes,comments (text,email))
+    return new_tuple_with_comment # NOTE list of tuples, [(imgdata, pid), ...]
+
+
 def getFriendPhotos(uid):
     cursor = conn.cursor()
     cursor.execute("SELECT imgdata, picture_id, caption, numLike FROM Pictures WHERE user_id in (Select f_id as user_id from friends where u_id ={0});".format(uid))
@@ -369,7 +394,6 @@ def getFriendPhotos(uid):
             new_tuple_with_comment.append(temp)
         #(img,pictureid, caption,numlikes,comments (text,email))
     return new_tuple_with_comment # NOTE list of tuples, [(imgdata, pid), ...]
-
 
 def getSearchPhotos(uid,searchstr):
     cursor = conn.cursor()
@@ -411,6 +435,15 @@ def update_scorebyone():
     cursor = conn.cursor()
     cursor.execute("UPDATE users SET score = score + 1 WHERE user_id ='{0}'".format(getUserId()))
     conn.commit()
+
+    
+@app.route('/profile/album', methods=['POST'])
+def show_album_photos():
+    # WORKING HERE
+    aid = request.form.get('album_id')
+    uid=getUserId()
+    return render_template('showalbumpictures.html', photos = getUserAlbumPhotos(uid, aid), base64=base64)
+
 
 @app.route('/profile/like', methods=['POST'])
 def like_photo():
