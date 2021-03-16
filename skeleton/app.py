@@ -229,6 +229,19 @@ def search_users():
     else:
         return '''<H1>"No Search Result"</H1><a href='/'>Home</a>'''
 
+@app.route("/Feed2/search", methods=['POST', 'GET'])
+def search_photo():
+    search = request.form.get('search_input')
+    try:
+        myID= getUserId()
+        cursor = conn.cursor()
+    except:
+        print("couldn't find all tokens")
+        return '''<H1>You need to login</H1>"'''
+
+    else:
+        return render_template('Feed2.html', photos=getSearchPhotos(getUserId(),search), base64=base64)
+
 
 @app.route("/friendList", methods=['GET'])
 def list_friends():
@@ -355,6 +368,24 @@ def getFriendPhotos(uid):
             new_tuple_with_comment.append(temp)
         #(img,pictureid, caption,numlikes,comments (text,email))
     return new_tuple_with_comment # NOTE list of tuples, [(imgdata, pid), ...]
+def getSearchPhotos(uid,searchstr):
+    cursor = conn.cursor()
+    str= searchstr
+    cursor.execute("Select * from (SELECT imgdata, picture_id, caption, numLike FROM Pictures WHERE user_id in (Select f_id as user_id from friends where u_id ='{0}'))as picture_list where caption like '%{1}%';".format(uid,str))
+    picture_list = cursor.fetchall()
+    new_tuple_with_comment = []
+    for i in range(len(picture_list)):
+        pid = picture_list[i][1]
+        if(cursor.execute("select text,email from(SELECT comment.p_id,comment.u_id,comment.text,users.email FROM comment INNER JOIN users ON comment.u_id = users.user_id) as newcomment where p_id ={0}".format(pid))):
+            comment = cursor.fetchall()
+            temp = (picture_list[i][0],picture_list[i][1],picture_list[i][2],picture_list[i][3],comment)
+            new_tuple_with_comment.append(temp)
+        else:
+            temp = (picture_list[i][0],picture_list[i][1], picture_list[i][2], picture_list[i][3])
+            new_tuple_with_comment.append(temp)
+        #(img,pictureid, caption,numlikes,comments (text,email))
+    return new_tuple_with_comment # NOTE list of tuples, [(imgdata, pid), ...]
+
 
 @app.route('/profile/like', methods=['POST'])
 def like_photo():

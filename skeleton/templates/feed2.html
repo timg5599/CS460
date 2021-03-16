@@ -20,6 +20,8 @@
         <script src="{{ url_for('static', filename='js/min/plugins.min.js') }}" > </script>
         <script src="{{ url_for('static', filename='js/min/main.min.js') }}" > </script>
     </head>
+
+
     <body>
         <!--[if lt IE 7]>
             <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
@@ -36,6 +38,7 @@
         <div class="site-top">
             <div class="site-header clearfix">
                 <div class="container">
+                    <a href="#" class="site-brand pull-left"><strong>Picture Share</strong> </a>
                     <div class="social-icons pull-right">
                          <li><a href='/upload'>Upload a photo</a> </li>
                          <li><a href='/logout'>Logout</a></li>
@@ -52,12 +55,12 @@
                     </div>
                     <div class="row">
                         <!-- Search Bar-->
-                        <form action="#" method="post" class="subscribe-form">
+                        <form method="post" action="{{ url_for('search_photo') }}">
                             <fieldset class="col-md-offset-4 col-md-3 col-sm-8">
-                                <input type="email"  id=" subscribe-email"placeholder="Search Image by Tag">
+                                <input style="color:black" type="text" id="subscribe-email" name="search_input" placeholder="search photo...">
                             </fieldset>
                             <fieldset class="col-md-5 col-sm-4">
-                                <input type="submit" id="subscribe-submit" class="button white" value="Find!">
+                                <input type="submit" id="subscribe-submit" class="button white" value="Search">
                             </fieldset>
                         </form>
                         <!-- Search Bar-->
@@ -82,13 +85,13 @@
                             </div>
                             <form method="post" action="{{ url_for('comment_photo_friend') }}">
                                 <input type="hidden" name="photo_id" value="{{photo[1]}}"/>
-                                <label>Comment: <input type="text" name="comment"></label>
-                                <button type="submit">comment</button>
+                                <label>Comment: <input style="color:black" type="text" name="comment"></label>
+                                <button style="color:black" type="submit">comment</button>
                            </form>
                             <form method="post" action="{{ url_for('like_photo_friend') }}">
                                             {{photo[3]}}
                                             <input type="hidden" name="photo_id" value="{{photo[1]}}"/>
-                                            <button type="submit">Like</button>
+                                            <button style="color:black" type="submit">Like</button>
                             </form>
                             {%if photo[4]%}
                             {%for list in photo[4]%}
