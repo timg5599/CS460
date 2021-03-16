@@ -32,7 +32,7 @@
     {% for photo in photos %}
 <div style="max-width: 400px" >
     <li>{{photo[2]}}<br>
-      <img src='data:image/jpg;base64, {{ base64.b64encode(photo[0]).decode("ascii") }}' width="400"/></li>
+      <img src='data:image/jpg;base64, {{ base64.b64encode(photo[0]).decode("ascii") }}' width="300"height="300"/></li>
 
         <form method="post" action="{{ url_for('comment_photo') }}">
             <input type="hidden" name="photo_id" value="{{photo[1]}}"/>
@@ -70,8 +70,5 @@
 </ul>
 
 
-{% if parameter %}
-<h1>There is something here</h1>
-{% endif%}
 
 
