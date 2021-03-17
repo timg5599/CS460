@@ -64,6 +64,16 @@
                             </fieldset>
                         </form>
                         <!-- Search Bar-->
+                        <form method="post" action="{{ url_for('search_tag') }}">
+                            <fieldset class="col-md-offset-4 col-md-3 col-sm-8">
+                                <input style="color:black"  name="search_input" placeholder="search photo...">
+                            </fieldset>
+                            <fieldset class="col-md-5 col-sm-4">
+                                <input type="submit"  class="button white" value="Search">
+                            </fieldset>
+                        </form>
+                        <!-- Search Bar-->
+                        
                     </div>
                 </div>
             </div> <!-- .site-banner -->

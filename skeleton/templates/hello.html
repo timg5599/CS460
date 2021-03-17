@@ -47,7 +47,26 @@
 {% endif %}
 
 
-{% if photos %}
+{% if tags %}
+<h2>Here are your tags</h2>
+    <ul>
+    {% for tag in tags %}
+      <div method="get" style="max-width: 400px" >
+          <!-- <a action="{{ url_for('show_album_photos', variable= '{{album}}' ) }}">{{album}}</a> -->
+        <!-- WORKING HERE -->
+        <form method="post" action="{{ url_for('show_tag_photos') }}"> 
+          <input type="hidden" name="tag_id" value="{{tag[0]}}"/>
+          <button type="submit">{{tag[1]}}</button>
+        </form>
+              
+      </div>
+
+
+    {% endfor %}
+    </ul>
+{% endif %}
+
+<!-- {% if photos %}
 <h2>Here are your photos</h2>
     <ul>
     {% for photo in photos %}
@@ -73,16 +92,16 @@
     <h5>{{list[1]}} : {{list[0]}}</h5>
     {%endfor%}
 
-    {%endif%}
-</div>
+    {%endif%} -->
+<!-- </div>
     {% endfor %}
     </ul>
-{% endif %}
+{% endif %} -->
 
 
 
 <ul>
-
+    <li><a href='/populartags'>See popular Tags</a></li>
     <li><a href='/createalbum'>Create Album</a> </li>
     <li><a href='/LeaderBoard'>LeaderBoard</a> </li>
     <li><a href='/Feed2'>Go check out photos</a> </li>

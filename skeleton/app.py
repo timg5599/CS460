@@ -294,7 +294,8 @@ def isAlbumUnique(albumname):
 @flask_login.login_required
 def protected():
         uid=getUserId()
-        return render_template('hello.html', name=flask_login.current_user.id, message='Photo uploaded!',albums = getUsersAlbums(uid), photos=getUsersPhotos(uid), base64=base64)
+        return render_template('hello.html', name=flask_login.current_user.id, message='Photo uploaded!',
+            albums = getUsersAlbums(uid), photos=getUsersPhotos(uid), tags = getUsersTags(uid), base64=base64)
 
 
 
@@ -317,15 +318,37 @@ def upload_file():
         update_scorebyone()
         album = getAlbumId(request.form.get('album'))
         photo_data = imgfile.read()
+        tag = request.form.get('tag')
         cursor = conn.cursor()
         cursor.execute('''INSERT INTO Pictures (imgdata, user_id, caption, album_id) VALUES (%s, %s, %s, %s )''',
                        (photo_data, uid, caption, album))
         conn.commit()
+
+        cursor.execute("SELECT MAX(picture_id) FROM Pictures WHERE user_id = '{0}'".format(uid))
+        pid = cursor.fetchall()
+
+        if not (cursor.execute("SELECT * FROM tags WHERE tag_text like '%{0}%'".format(tag))) :
+            cursor.execute('''INSERT INTO Tags (tag_text) VALUES (%s)''',(tag))
+            conn.commit()
+
+        cursor.execute('''INSERT INTO Tagged (tag_id, picture_id) VALUES (%s, %s)''',
+        (getTagId(tag)[0][0], pid))
+        conn.commit()
+
         return render_template('hello.html', name=flask_login.current_user.id, message='Photo uploaded!',
                                photos=getUsersPhotos(uid), base64=base64 )
     # The method is GET so we return a  HTML form to upload the a photo.
     else:
         return render_template('upload.html')
+
+# SELECT Tags.tag_text FROM tagged, Pictures, Tags WHERE Pictures.user_id = uid AND tagged.picture_id = Pictures.picture_id AND tagged.tag_id = Tags.tag_id
+
+
+
+def getTagId(tag):
+    cursor = conn.cursor()
+    cursor.execute("SELECT tag_id FROM Tags WHERE tag_text = '{0}'".format(tag))
+    return cursor.fetchall() 
 
 def getAlbumId(albumname):
     cursor = conn.cursor()
@@ -340,8 +363,42 @@ def getUsersAlbums(uid):
     for i in range(len(album_list)):
         album_ids.append(album_list[i][0])
         # album_ids.append([album_list[i][0], album_list[i][2]])
-        
     return album_list
+
+def getUsersTags(uid):
+    cursor = conn.cursor()
+    cursor.execute("SELECT Tags.tag_id, Tags.tag_text FROM tagged, Pictures, Tags WHERE\
+        Pictures.user_id = '{0}' AND tagged.picture_id = Pictures.picture_id\
+        AND tagged.tag_id = Tags.tag_id".format(uid))
+    tag_list = cursor.fetchall()
+    return tag_list
+
+
+@app.route("/Feed2/searchtag", methods=['POST', 'GET'])
+def search_tag():
+    search = request.form.get('search_input')
+
+    return render_template('Feed2.html', photos=getSearchPhotoTag(search), base64=base64)
+
+def getSearchPhotoTag(searchstr):
+    cursor = conn.cursor()
+    str= searchstr
+    cursor.execute("select imgdata, picture_id, caption, numLike from pictures where picture_id in(select picture_id as picture_id from (SELECT Tagged.tag_id, Tagged.picture_id, Tags.tag_text FROM Tagged INNER JOIN Tags ON tagged.tag_id = Tags.tag_id) as p where tag_text like '%{0}%')".format(searchstr))
+    
+    picture_list = cursor.fetchall()
+    new_tuple_with_comment = []
+    for i in range(len(picture_list)):
+        pid = picture_list[i][1]
+        if(cursor.execute("select text,email from(SELECT comment.p_id,comment.u_id,comment.text,users.email FROM comment INNER JOIN users ON comment.u_id = users.user_id) as newcomment where p_id ={0}".format(pid))):
+            comment = cursor.fetchall()
+            temp = (picture_list[i][0],picture_list[i][1],picture_list[i][2],picture_list[i][3],comment)
+            new_tuple_with_comment.append(temp)
+        else:
+            temp = (picture_list[i][0],picture_list[i][1], picture_list[i][2], picture_list[i][3])
+            new_tuple_with_comment.append(temp)
+
+    return new_tuple_with_comment # NOTE list of tuples, [(imgdata, pid), ...]
+
 
 def getUsersPhotos(uid):
     cursor = conn.cursor()
@@ -376,6 +433,34 @@ def getUserAlbumPhotos(uid, album):
             new_tuple_with_comment.append(temp)
         #(img,pictureid, caption,numlikes,comments (text,email))
     return new_tuple_with_comment # NOTE list of tuples, [(imgdata, pid), ...]
+
+def getUserTagPhotos(uid, tag):
+    cursor = conn.cursor()
+    cursor.execute("SELECT imgdata, Pictures.picture_id, caption, numLike FROM Pictures, Tagged WHERE user_id = '{0}' AND Pictures.picture_id = Tagged.picture_id AND Tagged.tag_id = '{1}'".format(uid, tag))
+    picture_list = cursor.fetchall()
+    new_tuple_with_comment = []
+    for i in range(len(picture_list)):
+        pid = picture_list[i][1]
+        if(cursor.execute("select text,email from(SELECT comment.p_id,comment.u_id,comment.text,users.email FROM comment INNER JOIN users ON comment.u_id = users.user_id) as newcomment where p_id ={0}".format(pid))):
+            comment = cursor.fetchall()
+            temp = (picture_list[i][0],picture_list[i][1],picture_list[i][2],picture_list[i][3],comment)
+            new_tuple_with_comment.append(temp)
+        else:
+            temp = (picture_list[i][0],picture_list[i][1], picture_list[i][2], picture_list[i][3])
+            new_tuple_with_comment.append(temp)
+        #(img,pictureid, caption,numlikes,comments (text,email))
+    return new_tuple_with_comment # NOTE list of tuples, [(imgdata, pid), ...]
+
+
+
+def get_popular_tags():
+    cursor = conn.cursor()
+    cursor.execute("SELECT tag_text, COUNT(tag_text) as cnt FROM (SELECT Tagged.tag_id , Tagged.picture_id, Tags.tag_text as tag_text FROM Tagged INNER JOIN Tags ON tagged.tag_id = Tags.tag_id) as a GROUP BY tag_text HAVING COUNT(tag_text) > 1 limit 5;")
+    return cursor.fetchall()
+
+@app.route('/populartags', methods=['get'])
+def show_popular_tag():
+    return render_template('populartags.html', tagdata= get_popular_tags())
 
 
 def getFriendPhotos(uid):
@@ -439,10 +524,15 @@ def update_scorebyone():
     
 @app.route('/profile/album', methods=['POST'])
 def show_album_photos():
-    # WORKING HERE
     aid = request.form.get('album_id')
     uid=getUserId()
     return render_template('showalbumpictures.html', photos = getUserAlbumPhotos(uid, aid), base64=base64)
+
+@app.route('/profile/tags', methods=['POST'])
+def show_tag_photos():
+    tag_id = request.form.get('tag_id')
+    uid=getUserId()
+    return render_template('showtagpictures.html', photos = getUserTagPhotos(uid, tag_id), base64=base64)
 
 
 @app.route('/profile/like', methods=['POST'])

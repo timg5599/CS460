@@ -57,6 +57,28 @@ CREATE TABLE Friends
    FOREIGN KEY (f_id) REFERENCES Users(user_id)
 );
 
+CREATE TABLE Tags(
+    tag_id int4 AUTO_INCREMENT PRIMARY Key,
+    tag_text VARCHAR(255)
+);
+
+CREATE TABLE tagged(
+    tag_id int4,
+    picture_id int4,
+    FOREIGN KEY (tag_id) references Tags(tag_id),
+    FOREIGN KEY (picture_id) references Pictures(picture_id)
+);
+
+-- SELECT imgdata, picture_id, caption, numLike from pictures where picture_id in(select picture_id as picture_id from (SELECT Tagged.tag_id, Tagged.picture_id, Tags.tag_text FROM Tagged INNER JOIN Tags ON tagged.tag_id = Tags.tag_id) as p where tag_text like '%test%';
+-- SELECT tag_text, COUNT(tag_text) as cnt FROM (SELECT Tagged.tag_id , Tagged.picture_id, Tags.tag_text as tag_text FROM Tagged INNER JOIN Tags ON tagged.tag_id = Tags.tag_id) as a
+-- GROUP BY tag_text
+-- HAVING COUNT(tag_text) > 1;
+
+SELECT Tags.tag_id, Tags.tag_text FROM tagged, Pictures, Tags WHERE
+Pictures.user_id = "1" AND tagged.picture_id = Pictures.picture_id
+AND tagged.tag_id = Tags.tag_id;
+
+
 INSERT INTO Users (email, password) VALUES ('test@bu.edu', 'test');
 INSERT INTO Users (email, password) VALUES ('test1@bu.edu', 'test');
 INSERT INTO Users (email, password) VALUES ('test2@bu.edu', 'test');
